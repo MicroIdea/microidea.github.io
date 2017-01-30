@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="日常的博客，记录一些小事">
+    <meta name="keyword"  content="日常">
+    <link rel="shortcut icon" href="/img/favicon.png">
+
+    <title>
+        
+          关于DNS报文 - 日常 | Nichijou
+        
+    </title>
+
+    <link rel="canonical" href="http://richang.xyz/2015/12/23/dns-messages/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Highlight CSS -->
+    <link rel="stylesheet" href="/css/highlight.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="https://cdn.staticfile.org/font-awesome/4.5.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">日常</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+
+                    
+
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/about/">About</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/archives/">Archives</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/tags/">Tags</a>
+                        </li>
+                        
+                    
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Main Content -->
+    
+<!-- Image to hack wechat -->
+<!-- <img src="http://richang.xyz/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="{{ site.baseurl }}/{% if page.header-img %}{{ page.header-img }}{% else %}{{ site.header-img }}{% endif %}" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/home-bg.jpg')
+    }
+</style>
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                          <a class="tag" href="/tags/#网络协议" title="网络协议">网络协议</a>
+                        
+                    </div>
+                    <h1>关于DNS报文</h1>
+                    <h2 class="subheading"></h2>
+                    <span class="meta">
+                        Posted by Will on
+                        2015-12-23
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <p>关于DNS报文的格式，备忘备忘。</p>
+<p>域名协议中所有的通信都是由同一种格式的报文来承载的，简单好记，粗看分为5个区块：<br><figure class="highlight asciidoc"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="code">+---------------------+</span></div><div class="line"><span class="section">|        Header       |</span></div><div class="line">+---------------------+</div><div class="line"><span class="section">|       Question      | the question for the name server</span></div><div class="line">+---------------------+</div><div class="line"><span class="section">|        Answer       | RRs answering the question</span></div><div class="line">+---------------------+</div><div class="line"><span class="section">|      Authority      | RRs pointing toward an authority</span></div><div class="line">+---------------------+</div><div class="line"><span class="section">|      Additional     | RRs holding additional information</span></div><div class="line">+---------------------+</div></pre></td></tr></table></figure></p>
+<ol>
+<li>Header: 报文头部</li>
+<li>Question: 问题区</li>
+<li>Answer: 回答区</li>
+<li>Authority: 权威信息区</li>
+<li>Additional: 附加信息区</li>
+</ol>
+<p>(RRs: Resource Records)</p>
+<p>问题区包含: a query type (QTYPE), a query class (QCLASS), and a query domain name (QNAME)<br>剩下的3个区格式都一样: 一个可能为空的相连的资源记录列表(RRs)，各个区的信息上面的ascii表格都说明了</p>
+<a id="more"></a>
+<h2 id="0x01-Header"><a href="#0x01-Header" class="headerlink" title="0x01 Header"></a><b style="color:#5abebc">0x01 Header</b></h2><figure class="highlight asciidoc"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="code">                                1  1  1  1  1  1</span></div><div class="line"><span class="section">  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5</span></div><div class="line">+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+</div><div class="line"><span class="section">|                      ID                       |</span></div><div class="line">+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+</div><div class="line"><span class="section">|QR|   Opcode  |AA|TC|RD|RA| Z|AD|CD|   RCODE   |</span></div><div class="line">+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+</div><div class="line"><span class="section">|                    QDCOUNT                    |</span></div><div class="line">+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+</div><div class="line"><span class="section">|                    ANCOUNT                    |</span></div><div class="line">+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+</div><div class="line"><span class="section">|                    NSCOUNT                    |</span></div><div class="line">+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+</div><div class="line"><span class="section">|                    ARCOUNT                    |</span></div><div class="line">+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+</div></pre></td></tr></table></figure>
+<p>一行两个字节，Header共12个字节</p>
+<p>ID: 16个bit的标示符，是由发出DNS请求的程序生成的，每次请求都不一样，DNS服务器回答的时候这个标示符会原样copy，这样问题和回答就能一一对应了</p>
+<p>QR: 只有1个bit，0表示该报文是一个问题(query)，1表示是一个回答(response)</p>
+<p>OPCODE: 4个bit，用来表示这个报文的请求类型，当然是由问题的发起者设置了，回答的时候这个也是原样copy<br>0    a standard query (QUERY) 普普通通的请求<br>1    an inverse query (IQUERY) 逆向请求，知道ip问域名<br>2    a server status request (STATUS) 问问服务器的状态<br>3-15 留着将来说不定有用</p>
+<p>AA: Authoritative Answer，1个bit，只在应答报文中有效，表示该回答是否由<a href="https://en.wikipedia.org/wiki/Name_server#Authoritative_name_server" target="_blank" rel="external">权威服务器</a>发出</p>
+<p>TC: TrunCation，1个bit，表示该报文是否因为大小超出传输层上限而分片了</p>
+<p>RD: Recursion Desired，1个bit，由发问方设置DNS服务器原样copy，如果该bit置1则表示希望DNS服务器可以递归地执行请求（但是服务器并不一定支持递归，<a href="https://en.wikipedia.org/wiki/Domain_Name_System#DNS_resolvers" target="_blank" rel="external">DNS查询方式</a>可以是非递归、递归、迭代或者以上的组合）</p>
+<p>RA: Recursion Available，1个bit，由DNS服务器设置，表示该服务器是否支持递归查询</p>
+<p>Z: 1个bit，保留用，置0 （RFC1035中为3个bit）</p>
+<p>AD: Authentic Data，1个bit，DNS服务器设置，表示answer和authority区的数据都是经过认证的（RFC2535新增）</p>
+<p>CD: Checking Disabled，1个bit，发问方设置，表示是否接受非认证数据（RFC2535新增）</p>
+<p>RCODE: Response code，4个bit，由DNS服务器设置<br>0    无错误<br>1    格式错误，服务器无法解析请求<br>2    服务器内部错误<br>3    域名错误，仅对权威域名服务器的响应有意义，表示该域名不存在<br>4    未实现，该请求的类型域名服务器尚不支持<br>5    拒绝，服务器傲娇<br>6-15 保留</p>
+<p>QDCOUNT: 无符号16bit整型，表示问题区的条目数</p>
+<p>ANCOUNT: 无符号16bit整型，表示回答区的资源记录数</p>
+<p>NSCOUNT: 无符号16bit整型，表示权威信息区的资源记录数</p>
+<p>ARCOUNT: 无符号16bit整型，表示附加信息区的资源记录数</p>
+<p>以上就是DNS报文Header的所有信息</p>
+<h2 id="0x02-Question"><a href="#0x02-Question" class="headerlink" title="0x02 Question"></a><b style="color:#5abebc">0x02 Question</b></h2><figure class="highlight asciidoc"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="code">                                1  1  1  1  1  1</span></div><div class="line"><span class="section">  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5</span></div><div class="line">+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+</div><div class="line">|                                               |</div><div class="line">/                     QNAME                     /</div><div class="line"><span class="section">/                                               /</span></div><div class="line">+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+</div><div class="line"><span class="section">|                     QTYPE                     |</span></div><div class="line">+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+</div><div class="line"><span class="section">|                     QCLASS                    |</span></div><div class="line">+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+</div></pre></td></tr></table></figure>
+<p>问题区，包含QDCOUNT（通常都是1）条记录，每条记录的格式都是上图的样子</p>
+<p>QNAME: 长度可变，由一个表示域名<a href="https://en.wikipedia.org/wiki/Domain_Name_System#Label" target="_blank" rel="external">Label</a>长度的字节后再加上Label组成的数据，结尾一个全0字节，因为root zone算是一个null label。举个例子：www.google.com表示为 <code>3www6google3com0</code><br>这组数据不仅长度不定而且可以是奇数个字节，后面也不要填充（padding）</p>
+<p>QTYPE: 2个字节，表示<a href="https://en.wikipedia.org/wiki/List_of_DNS_record_types" target="_blank" rel="external">请求类型</a></p>
+<p>QCLASS: 2个字节，表示请求的种类（Class），一般都设置成IN（for Internet）,还有其它种类但是一般情况不会用到</p>
+<h2 id="0x03-Resource-Record"><a href="#0x03-Resource-Record" class="headerlink" title="0x03 Resource Record"></a><b style="color:#5abebc">0x03 Resource Record</b></h2><figure class="highlight asciidoc"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line"><span class="code">                                1  1  1  1  1  1</span></div><div class="line"><span class="section">  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5</span></div><div class="line">+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+</div><div class="line">|                                               |</div><div class="line">/                                               /</div><div class="line">/                      NAME                     /</div><div class="line"><span class="section">|                                               |</span></div><div class="line">+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+</div><div class="line"><span class="section">|                      TYPE                     |</span></div><div class="line">+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+</div><div class="line"><span class="section">|                     CLASS                     |</span></div><div class="line">+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+</div><div class="line">|                      TTL                      |</div><div class="line"><span class="section">|                                               |</span></div><div class="line">+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+</div><div class="line">|                   RDLENGTH                    |</div><div class="line"><span class="code">+--+</span>--<span class="code">+--+</span>--<span class="code">+--+</span>--<span class="code">+--+</span>--<span class="code">+--+</span>--<span class="code">+--+</span>--<span class="code">+--+</span>--<span class="code">+--+</span>--|</div><div class="line">/                     RDATA                     /</div><div class="line"><span class="section">/                                               /</span></div><div class="line">+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+</div></pre></td></tr></table></figure>
+<p>Question区下面的三个：Answer, Authority和Additional格式全部一样，见上图，都存储着资源记录（RRs），记录的数量在Header里面已经有说明了</p>
+<p>NAME: 不定长，本条资源记录相关的1个域名</p>
+<p>TYPE: 2个字节，表示RDATA区的资源类型，和QTYPE一致</p>
+<p>CLASS: 2个字节，表示RDATA区的资源种类，和QCLASS一致</p>
+<p>TTL: 32bit无符号整型，表示改资源记录可以缓存多少秒，0表示改记录只能用一次，不可缓存</p>
+<p>RDLENGTH: 16bit无符号整型，表示RDATA区的字节数</p>
+<p>RDATA: 资源记录本体，不定长，格式由TYPE和CLASS决定，e.g. 如果TYPE为A，CLASS为IN，那么RDATA区就是4个字节的ARPA Internet address（就是普通的IPv4地址…）</p>
+<h2 id="0x04-信息压缩"><a href="#0x04-信息压缩" class="headerlink" title="0x04 信息压缩"></a><b style="color:#5abebc">0x04 信息压缩</b></h2><p>为了减小报文长度，当多条域名含有相同部分的时候可以使用指针来压缩信息，这样一个报文中的域名就有3种表示方法：</p>
+<ol>
+<li>一序列的label加上一个全0的字节作结尾（普通向）</li>
+<li>只有1个指针（简洁向）</li>
+<li>一序列的label加上一个指针作结尾（混合向）</li>
+</ol>
+<p>怎么区分数据是一个普通的label还是一个特殊的指针？</p>
+<p>因为一个label规定是必须小于等于63个字符的，所以label前表示长度的一个字节开头两个bit必然是0，而指针则开头两个bit全部为1，画个图：</p>
+<p>普通label（后面为了简略直接写ascii）：<br><figure class="highlight asciidoc"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="section">  0  1  2  3  4  5  6  7  8  ...</span></div><div class="line">+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+</div><div class="line"><span class="section">| 0  0  0  0  0  0  1  1|        w w w          | ...</span></div><div class="line">+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+</div></pre></td></tr></table></figure></p>
+<p>指针，占2个字节（后面的OFFSET指偏移量不是实际数据）：<br><figure class="highlight asciidoc"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="section">  0  1  2  3  4  5  6  7  8  ...</span></div><div class="line">+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+</div><div class="line"><span class="section">| 1  1  0  0  0  0  0  0|        OFFSET         | ...</span></div><div class="line">+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+</div></pre></td></tr></table></figure></p>
+<p>这个关键的偏移量就是指针所指向的数据了，偏移量是从报文开头，也就是header开始算，第一个字节偏移量为0</p>
+<p>因为指针是为了压缩域名中的重复部分，所以肯定是指向header之后包含域名的数据了，再举个例子：</p>
+<p>报文中含有www.google.com和images.google.com，重复部分是<code>google.com</code>，信息压缩后就是（用ascii表示）</p>
+<p><code>3www6google3com0</code>（假设其中<code>6</code>这个字节在报文中的偏移量是20）和<code>6images19220</code></p>
+<p>注意192和20是分开的两个字节，192就是上图中的<code>11000000</code>，而20就是偏移量，指向的实际数据就是<code>6google3com0</code></p>
+<p>这样用2个字节就表示了原来12个字节的内容</p>
+<h2 id="0x05-样例"><a href="#0x05-样例" class="headerlink" title="0x05 样例"></a><b style="color:#5abebc">0x05 样例</b></h2><p>上wireshark抓个DNS包来看看实际和理论到底是否吻合。浏览器打开<code>www.bing.com</code>，第一个包就是DNS请求，因为不知道IP没法建立TCP连接啊。省略了应用层以上的协议数据（像这种单个域名信息量比较少的DNS请求传输层一般都用UDP），数据用16进制表示<br><figure class="highlight clean"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line"><span class="number">08</span> e2 <span class="number">01</span> <span class="number">00</span> <span class="number">00</span> <span class="number">01</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span></div><div class="line"><span class="number">03</span> <span class="number">77</span> <span class="number">77</span> <span class="number">77</span> <span class="number">04</span> <span class="number">62</span> <span class="number">69</span> <span class="number">6</span>e <span class="number">67</span> <span class="number">03</span> <span class="number">63</span> <span class="number">6</span>f <span class="number">6</span>d <span class="number">00</span> <span class="number">00</span> <span class="number">01</span> <span class="number">00</span> <span class="number">01</span></div><div class="line"></div><div class="line">Transaction ID: <span class="number">0x08e2</span></div><div class="line">Flags: <span class="number">0x0100</span> Standard query</div><div class="line">    <span class="number">0.</span>.. .... .... .... = Response: Message is a query</div><div class="line">    <span class="number">.000</span> <span class="number">0.</span>.. .... .... = Opcode: Standard query (<span class="number">0</span>)</div><div class="line">    .... ..<span class="number">0.</span> .... .... = Truncated: Message is not truncated</div><div class="line">    .... ..<span class="number">.1</span> .... .... = Recursion desired: Do query recursively</div><div class="line">    .... .... <span class="number">.0</span>.. .... = Z: reserved (<span class="number">0</span>)</div><div class="line">    .... .... ..<span class="number">.0</span> .... = Non-authenticated data: Unacceptable</div><div class="line">Questions: <span class="number">1</span></div><div class="line">Answer RRs: <span class="number">0</span></div><div class="line">Authority RRs: <span class="number">0</span></div><div class="line">Additional RRs: <span class="number">0</span></div><div class="line"></div><div class="line">Queries</div><div class="line">    www.bing.com: type A, <span class="keyword">class</span> IN</div><div class="line">        Name: www.bing.com</div><div class="line">        [Name Length: <span class="number">12</span>]</div><div class="line">        [Label Count: <span class="number">3</span>]</div><div class="line">        Type: A (Host Address) (<span class="number">1</span>)</div><div class="line">        Class: IN (<span class="number">0x0001</span>)</div></pre></td></tr></table></figure></p>
+<p>第一行是Header，第二行是Question，下面是wireshark对数据的解释，已经很清晰了</p>
+<p>Flag里面没有解析AA、RA、AD和RCODE，因为这几位只有在应答报文中才有意义</p>
+<p>以下是应答报文，可以看到里面很多地方用到了数据压缩（搜索c0）：</p>
+<figure class="highlight clean"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div></pre></td><td class="code"><pre><div class="line"><span class="number">0000</span>   <span class="number">08</span> e2 <span class="number">81</span> <span class="number">80</span> <span class="number">00</span> <span class="number">01</span> <span class="number">00</span> <span class="number">02</span> <span class="number">00</span> <span class="number">02</span> <span class="number">00</span> <span class="number">02</span> <span class="number">03</span> <span class="number">77</span> <span class="number">77</span> <span class="number">77</span>  .............www</div><div class="line"><span class="number">0010</span>   <span class="number">04</span> <span class="number">62</span> <span class="number">69</span> <span class="number">6</span>e <span class="number">67</span> <span class="number">03</span> <span class="number">63</span> <span class="number">6</span>f <span class="number">6</span>d <span class="number">00</span> <span class="number">00</span> <span class="number">01</span> <span class="number">00</span> <span class="number">01</span> c0 <span class="number">0</span>c  .bing.com.......</div><div class="line"><span class="number">0020</span>   <span class="number">00</span> <span class="number">05</span> <span class="number">00</span> <span class="number">01</span> <span class="number">00</span> <span class="number">00</span> <span class="number">02</span> <span class="number">58</span> <span class="number">00</span> <span class="number">18</span> <span class="number">02</span> <span class="number">63</span> <span class="number">6</span>e <span class="number">06</span> <span class="number">61</span> <span class="number">2</span>d  .......X...cn.a-</div><div class="line"><span class="number">0030</span>   <span class="number">30</span> <span class="number">30</span> <span class="number">30</span> <span class="number">31</span> <span class="number">08</span> <span class="number">61</span> <span class="number">2</span>d <span class="number">6</span>d <span class="number">73</span> <span class="number">65</span> <span class="number">64</span> <span class="number">67</span> <span class="number">65</span> <span class="number">03</span> <span class="number">6</span>e <span class="number">65</span>  <span class="number">0001.</span>a-msedge.ne</div><div class="line"><span class="number">0040</span>   <span class="number">74</span> <span class="number">00</span> c0 <span class="number">2</span>a <span class="number">00</span> <span class="number">01</span> <span class="number">00</span> <span class="number">01</span> <span class="number">00</span> <span class="number">00</span> <span class="number">02</span> <span class="number">58</span> <span class="number">00</span> <span class="number">04</span> ca <span class="number">59</span>  t..*.......X...Y</div><div class="line"><span class="number">0050</span>   e9 <span class="number">65</span> c0 <span class="number">34</span> <span class="number">00</span> <span class="number">02</span> <span class="number">00</span> <span class="number">01</span> <span class="number">00</span> <span class="number">00</span> b1 ca <span class="number">00</span> <span class="number">06</span> <span class="number">03</span> <span class="number">6</span>e  .e<span class="number">.4</span>...........n</div><div class="line"><span class="number">0060</span>   <span class="number">73</span> <span class="number">32</span> c0 <span class="number">34</span> c0 <span class="number">34</span> <span class="number">00</span> <span class="number">02</span> <span class="number">00</span> <span class="number">01</span> <span class="number">00</span> <span class="number">00</span> b1 ca <span class="number">00</span> <span class="number">06</span>  s2<span class="number">.4</span><span class="number">.4</span>..........</div><div class="line"><span class="number">0070</span>   <span class="number">03</span> <span class="number">6</span>e <span class="number">73</span> <span class="number">31</span> c0 <span class="number">34</span> c0 <span class="number">70</span> <span class="number">00</span> <span class="number">01</span> <span class="number">00</span> <span class="number">01</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> e8  .ns1<span class="number">.4</span>.p........</div><div class="line"><span class="number">0080</span>   <span class="number">00</span> <span class="number">04</span> cc <span class="number">4</span>f c5 <span class="number">01</span> c0 <span class="number">5</span>e <span class="number">00</span> <span class="number">01</span> <span class="number">00</span> <span class="number">01</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> da  ...O...^........</div><div class="line"><span class="number">0090</span>   <span class="number">00</span> <span class="number">04</span> cc <span class="number">4</span>f c5 <span class="number">02</span>                                ...O..</div><div class="line"></div><div class="line">Domain Name System (response)</div><div class="line">    Transaction ID: <span class="number">0x08e2</span></div><div class="line">    Flags: <span class="number">0x8180</span> Standard query response, No error</div><div class="line">        <span class="number">1.</span>.. .... .... .... = Response: Message is a response</div><div class="line">        <span class="number">.000</span> <span class="number">0.</span>.. .... .... = Opcode: Standard query (<span class="number">0</span>)</div><div class="line">        .... <span class="number">.0</span>.. .... .... = Authoritative: Server is not an authority for domain</div><div class="line">        .... ..<span class="number">0.</span> .... .... = Truncated: Message is not truncated</div><div class="line">        .... ..<span class="number">.1</span> .... .... = Recursion desired: Do query recursively</div><div class="line">        .... .... <span class="number">1.</span>.. .... = Recursion available: Server can do recursive queries</div><div class="line">        .... .... <span class="number">.0</span>.. .... = Z: reserved (<span class="number">0</span>)</div><div class="line">        .... .... ..<span class="number">0.</span> .... = Answer authenticated: Answer/authority portion was not authenticated by the server</div><div class="line">        .... .... ..<span class="number">.0</span> .... = Non-authenticated data: Unacceptable</div><div class="line">        .... .... .... <span class="number">0000</span> = Reply <span class="keyword">code</span>: No error (<span class="number">0</span>)</div><div class="line">    Questions: <span class="number">1</span></div><div class="line">    Answer RRs: <span class="number">2</span></div><div class="line">    Authority RRs: <span class="number">2</span></div><div class="line">    Additional RRs: <span class="number">2</span></div><div class="line">    Queries</div><div class="line">        www.bing.com: type A, <span class="keyword">class</span> IN</div><div class="line">            Name: www.bing.com</div><div class="line">            [Name Length: <span class="number">12</span>]</div><div class="line">            [Label Count: <span class="number">3</span>]</div><div class="line">            Type: A (Host Address) (<span class="number">1</span>)</div><div class="line">            Class: IN (<span class="number">0x0001</span>)</div><div class="line">    Answers</div><div class="line">        www.bing.com: type CNAME, <span class="keyword">class</span> IN, cname cn.a<span class="number">-0001.</span>a-msedge.net</div><div class="line">            Name: www.bing.com</div><div class="line">            Type: CNAME (Canonical NAME for an alias) (<span class="number">5</span>)</div><div class="line">            Class: IN (<span class="number">0x0001</span>)</div><div class="line">            Time to live: <span class="number">600</span></div><div class="line">            Data length: <span class="number">24</span></div><div class="line">            CNAME: cn.a<span class="number">-0001.</span>a-msedge.net</div><div class="line">        cn.a<span class="number">-0001.</span>a-msedge.net: type A, <span class="keyword">class</span> IN, addr <span class="number">202.89</span><span class="number">.233</span><span class="number">.101</span></div><div class="line">            Name: cn.a<span class="number">-0001.</span>a-msedge.net</div><div class="line">            Type: A (Host Address) (<span class="number">1</span>)</div><div class="line">            Class: IN (<span class="number">0x0001</span>)</div><div class="line">            Time to live: <span class="number">600</span></div><div class="line">            Data length: <span class="number">4</span></div><div class="line">            Address: <span class="number">202.89</span><span class="number">.233</span><span class="number">.101</span></div><div class="line">    Authoritative nameservers</div><div class="line">        a-msedge.net: type NS, <span class="keyword">class</span> IN, ns ns2.a-msedge.net</div><div class="line">            Name: a-msedge.net</div><div class="line">            Type: NS (authoritative Name Server) (<span class="number">2</span>)</div><div class="line">            Class: IN (<span class="number">0x0001</span>)</div><div class="line">            Time to live: <span class="number">45514</span></div><div class="line">            Data length: <span class="number">6</span></div><div class="line">            Name Server: ns2.a-msedge.net</div><div class="line">        a-msedge.net: type NS, <span class="keyword">class</span> IN, ns ns1.a-msedge.net</div><div class="line">            Name: a-msedge.net</div><div class="line">            Type: NS (authoritative Name Server) (<span class="number">2</span>)</div><div class="line">            Class: IN (<span class="number">0x0001</span>)</div><div class="line">            Time to live: <span class="number">45514</span></div><div class="line">            Data length: <span class="number">6</span></div><div class="line">            Name Server: ns1.a-msedge.net</div><div class="line">    Additional records</div><div class="line">        ns1.a-msedge.net: type A, <span class="keyword">class</span> IN, addr <span class="number">204.79</span><span class="number">.197</span><span class="number">.1</span></div><div class="line">            Name: ns1.a-msedge.net</div><div class="line">            Type: A (Host Address) (<span class="number">1</span>)</div><div class="line">            Class: IN (<span class="number">0x0001</span>)</div><div class="line">            Time to live: <span class="number">232</span></div><div class="line">            Data length: <span class="number">4</span></div><div class="line">            Address: <span class="number">204.79</span><span class="number">.197</span><span class="number">.1</span></div><div class="line">        ns2.a-msedge.net: type A, <span class="keyword">class</span> IN, addr <span class="number">204.79</span><span class="number">.197</span><span class="number">.2</span></div><div class="line">            Name: ns2.a-msedge.net</div><div class="line">            Type: A (Host Address) (<span class="number">1</span>)</div><div class="line">            Class: IN (<span class="number">0x0001</span>)</div><div class="line">            Time to live: <span class="number">218</span></div><div class="line">            Data length: <span class="number">4</span></div><div class="line">            Address: <span class="number">204.79</span><span class="number">.197</span><span class="number">.2</span></div></pre></td></tr></table></figure>
+<p>Answer: 里面有两条记录，第一个就是我们直接键入的网址<code>www.bing.com</code>，但是这条记录是个CNAME，就是一个别名，指向了<code>cn.a-0001.a-msedge.net</code>，这是因为本人在中国地区且没有挂代理，如果是在其他国家就会返回不同的记录了。这也是大部分CDN的原理，选择离用户最近的服务器，提高响应速度，不同语言地区显示不同的页面。<br>第二条是个普通的A记录，就是<code>cn.a-0001.a-msedge.net</code>的IPv4地址</p>
+<p>Authority: 权威信息区里面也有两条记录，type都是NS（Name Server），表示<code>www.bing.com</code>这个域名的其实是托管在<code>ns2.a-msedge.net</code>和<code>ns1.a-msedge.net</code>这两台域名服务器的，这两个服务器就是它的权威or授权服务器<br>P.S. 本人当时用了阿里的DNS（223.5.5.5）,后换用bing的权威域名服务器<code>204.79.197.1</code>，之后返回的信息只有Answer和Authority，就没有Additional了</p>
+<p>Additional: 附加信息区也有两条记录，type A，就是上述两台权威服务器的IPv4地址了</p>
+<h4 id="参考资料："><a href="#参考资料：" class="headerlink" title="参考资料："></a>参考资料：</h4><p>1.<a href="https://en.wikipedia.org/wiki/Domain_Name_System" target="_blank" rel="external">Wikipedia</a>: Domain Name System<br>2.<a href="https://tools.ietf.org/html/rfc1035" target="_blank" rel="external">RFC 1035</a>: DOMAIN NAMES - IMPLEMENTATION AND SPECIFICATION<br>3.<a href="https://tools.ietf.org/html/rfc2535" target="_blank" rel="external">RFC 2535</a>: Domain Name System Security Extensions</p>
+
+
+                <hr>
+
+                
+
+                <ul class="pager">
+                    
+                        <li class="previous">
+                            <a href="/2016/01/06/use-crontab-to-execute-scheduled-commands/" data-toggle="tooltip" data-placement="top" title="用 crontab 执行计划任务">&larr; Previous Post</a>
+                        </li>
+                    
+                    
+                        <li class="next">
+                            <a href="/2015/10/05/how-to-modify-sip-in-el-capitan/" data-toggle="tooltip" data-placement="top" title="关于 OS X El Capitan 的 SIP">Next Post &rarr;</a>
+                        </li>
+                    
+                </ul>
+
+                
+
+                
+                <!-- disqus 评论框 start -->
+                <div class="comment">
+                    <div id="disqus_thread" class="disqus-thread"></div>
+                </div>
+                <!-- disqus 评论框 end -->
+                
+
+            </div>
+    <!-- Side Catalog Container -->
+        
+
+    <!-- Sidebar Container -->
+
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+
+                <!-- Friends Blog -->
+                
+            </div>
+
+        </div>
+    </div>
+</article>
+
+
+
+
+<!-- disqus 公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = "hexo-theme-huxblog";
+    var disqus_identifier = "http://richang.xyz/2015/12/23/dns-messages/";
+    var disqus_url = "http://richang.xyz/2015/12/23/dns-messages/";
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("https://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                
+                
+                
+
+                
+
+                
+
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 日常 2017 
+                    <br>
+                    Theme by <a href="http://huangxuan.me">Hux</a> 
+                    <span style="display: inline-block; margin: 0 5px;">
+                        <i class="fa fa-heart"></i>
+                    </span> 
+                    Ported by <a href="http://blog.kaijun.rocks">Kaijun</a> | 
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="91px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=kaijun&repo=hexo-theme-huxblog&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js"></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- 
+     Because of the native support for backtick-style fenced code blocks 
+     right within the Markdown is landed in Github Pages, 
+     From V1.6, There is no need for Highlight.js, 
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0  
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/    
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("http://richang.xyz/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("https://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+
+
+
+<!-- Baidu Tongji -->
+
+
+<!-- Side Catalog -->
+
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="http://richang.xyz/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

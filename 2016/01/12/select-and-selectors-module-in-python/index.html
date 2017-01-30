@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="日常的博客，记录一些小事">
+    <meta name="keyword"  content="日常">
+    <link rel="shortcut icon" href="/img/favicon.png">
+
+    <title>
+        
+          Python 中的 select 和 selectors 模块 - 日常 | Nichijou
+        
+    </title>
+
+    <link rel="canonical" href="http://richang.xyz/2016/01/12/select-and-selectors-module-in-python/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Highlight CSS -->
+    <link rel="stylesheet" href="/css/highlight.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="https://cdn.staticfile.org/font-awesome/4.5.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">日常</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+
+                    
+
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/about/">About</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/archives/">Archives</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/tags/">Tags</a>
+                        </li>
+                        
+                    
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Main Content -->
+    
+<!-- Image to hack wechat -->
+<!-- <img src="http://richang.xyz/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="{{ site.baseurl }}/{% if page.header-img %}{{ page.header-img }}{% else %}{{ site.header-img }}{% endif %}" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/home-bg.jpg')
+    }
+</style>
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                          <a class="tag" href="/tags/#python" title="python">python</a>
+                        
+                    </div>
+                    <h1>Python 中的 select 和 selectors 模块</h1>
+                    <h2 class="subheading"></h2>
+                    <span class="meta">
+                        Posted by Will on
+                        2016-01-12
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <p>select 模块封装了各个平台的 I/O 多路复用函数</p>
+<p>各系统函数 epoll, kqueue 和 /dev/poll 要优于 poll，poll 又优于 select，实现时间当然也是从晚到早，可以参考<a href="https://www.zhihu.com/question/32163005/answer/55772739?utm_campaign=webshare&amp;utm_source=weibo&amp;utm_medium=zhihu" target="_blank" rel="external">这篇</a>，讲解比较生动</p>
+<p>Python 3.4 版本增加了 selectors 模块，是在 select 模块上更高一层的抽象，因为 select 模块太麻烦了啊，不同系统还要做不同的适配。除非使用的是旧版 Python 或者想做更细粒度的操作，不然建议用 selectors，更省心</p>
+<p>列一下 select 模块中的几个函数：</p>
+<ol>
+<li>epoll (Linux 2.5.44 and newer)</li>
+<li>kqueue &amp; kevent (BSD)</li>
+<li>devpoll (Solaris 及其衍生版)</li>
+<li>poll (并不被所有系统支持，使用前先检查)</li>
+<li>select (Unix-like 系统直接调用了 select 系统函数，Windows 则由 WinSock 库支持)</li>
+</ol>
+<p>可见使用 select 要全面覆盖所有系统是有点麻烦的，至少要用到 1. epoll(Linux) 2. kqueue(Mac) 5. select(Windows)<br>另外 I/O 多路复用最多的还是用在和 socket 打交道上，如果对 socket 不是太熟悉，建议通读一遍<a href="https://docs.python.org/2/howto/sockets.html" target="_blank" rel="external">官方的 socket 教程</a>，写的很详细，指出了很多可能遇到的坑</p>
+<a id="more"></a>
+<h2 id="0x01-EPOLL"><a href="#0x01-EPOLL" class="headerlink" title="0x01 EPOLL"></a><b style="color:#5abebc">0x01 EPOLL</b></h2><p>先说 epoll（需要有一台 Linux），首先需要获得一个 epoll 对象：<br><figure class="highlight lsl"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">select.epoll(sizehint=<span class="number">-1</span>, flags=<span class="number">0</span>)</div></pre></td></tr></table></figure></p>
+<p>函数返回一个 epoll object<br>sizehint: 已经是 deprecated 并且完全被无视，为了兼容性才占个地儿吧<br>flags: 3.3版本才添加的，可以设置为<code>EPOLL_CLOEXEC</code>，这样当调用<code>os.execve()</code>的时候在 epoll 的文件描述符就会自动关闭</p>
+<p>另外函数在3.4版本的时候支持 with 语句</p>
+<p>有了 epoll 对象，再看看它有哪些方法属性，直接在一台 Linux (Python 2.6.6) 上查看 help 好了（说实话这样都比官方文档上的更详细）<br><figure class="highlight gherkin"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div></pre></td><td class="code"><pre><div class="line">Help on class epoll in module select:</div><div class="line"></div><div class="line">class epoll(__builtin__.object)</div><div class="line"> |<span class="string">  select.epoll([sizehint=-1])</span></div><div class="line"> |<span class="string">  </span></div><div class="line"> |<span class="string">  Returns an epolling object</span></div><div class="line"> |<span class="string">  </span></div><div class="line"> |<span class="string">  sizehint must be a positive integer or -1 for the default size. The</span></div><div class="line"> |<span class="string">  sizehint is used to optimize internal data structures. It doesn't limit</span></div><div class="line"> |<span class="string">  the maximum number of monitored events.</span></div><div class="line"> |<span class="string">  </span></div><div class="line"> |<span class="string">  Methods defined here:</span></div><div class="line"> |<span class="string">  </span></div><div class="line"> |<span class="string">  __getattribute__(...)</span></div><div class="line"> |<span class="string">      x.__getattribute__('name') &lt;==&gt; x.name</span></div><div class="line"> |<span class="string">  </span></div><div class="line"> |<span class="string">  close(...)</span></div><div class="line"> |<span class="string">      close() -&gt; None</span></div><div class="line"> |<span class="string">      </span></div><div class="line"> |<span class="string">      Close the epoll control file descriptor. Further operations on the epoll</span></div><div class="line"> |<span class="string">      object will raise an exception.</span></div><div class="line"> |<span class="string">  </span></div><div class="line"> |<span class="string">  fileno(...)</span></div><div class="line"> |<span class="string">      fileno() -&gt; int</span></div><div class="line"> |<span class="string">      </span></div><div class="line"> |<span class="string">      Return the epoll control file descriptor.</span></div><div class="line"> |<span class="string">  </span></div><div class="line"> |<span class="string">  modify(...)</span></div><div class="line"> |<span class="string">      modify(fd, eventmask) -&gt; None</span></div><div class="line"> |<span class="string">      </span></div><div class="line"> |<span class="string">      fd is the target file descriptor of the operation</span></div><div class="line"> |<span class="string">      events is a bit set composed of the various EPOLL constants</span></div><div class="line"> |<span class="string">  </span></div><div class="line"> |<span class="string">  poll(...)</span></div><div class="line"> |<span class="string">      poll([timeout=-1[, maxevents=-1]]) -&gt; [(fd, events), (...)]</span></div><div class="line"> |<span class="string">      </span></div><div class="line"> |<span class="string">      Wait for events on the epoll file descriptor for a maximum time of timeout</span></div><div class="line"> |<span class="string">      in seconds (as float). -1 makes poll wait indefinitely.</span></div><div class="line"> |<span class="string">      Up to maxevents are returned to the caller.</span></div><div class="line"> |<span class="string">  </span></div><div class="line"> |<span class="string">  register(...)</span></div><div class="line"> |<span class="string">      register(fd[, eventmask]) -&gt; None</span></div><div class="line"> |<span class="string">      </span></div><div class="line"> |<span class="string">      Registers a new fd or modifies an already registered fd.</span></div><div class="line"> |<span class="string">      fd is the target file descriptor of the operation.</span></div><div class="line"> |<span class="string">      events is a bit set composed of the various EPOLL constants; the default</span></div><div class="line"> |<span class="string">      is EPOLL_IN </span>|<span class="string"> EPOLL_OUT </span>|<span class="string"> EPOLL_PRI.</span></div><div class="line"> |<span class="string">      </span></div><div class="line"> |<span class="string">      The epoll interface supports all file descriptors that support poll.</span></div><div class="line"> |<span class="string">  </span></div><div class="line"> |<span class="string">  unregister(...)</span></div><div class="line"> |<span class="string">      unregister(fd) -&gt; None</span></div><div class="line"> |<span class="string">      </span></div><div class="line"> |<span class="string">      fd is the target file descriptor of the operation.</span></div><div class="line"> |<span class="string">  </span></div><div class="line"> |<span class="string">  ----------------------------------------------------------------------</span></div><div class="line"> |<span class="string">  Data descriptors defined here:</span></div><div class="line"> |<span class="string">  </span></div><div class="line"> |<span class="string">  closed</span></div><div class="line"> |<span class="string">      True if the epoll handler is closed</span></div><div class="line"> |<span class="string">  </span></div><div class="line"> |<span class="string">  ----------------------------------------------------------------------</span></div><div class="line"> |<span class="string">  Data and other attributes defined here:</span></div><div class="line"> |<span class="string">  </span></div><div class="line"> |<span class="string">  __new__ = &lt;built-in method __new__ of type object&gt;</span></div><div class="line"> |<span class="string">      T.__new__(S, ...) -&gt; a new object with type S, a subtype of T</span></div><div class="line"> |<span class="string">  </span></div><div class="line"> |<span class="string">  fromfd = &lt;built-in method fromfd of type object&gt;</span></div><div class="line"> |<span class="string">      fromfd(fd) -&gt; epoll</span></div><div class="line"> |<span class="string">      </span></div><div class="line"> |<span class="string">      Create an epoll object from a given control fd.</span></div><div class="line">(END)</div></pre></td></tr></table></figure></p>
+<p>help 里面没有列出来的还有<code>eventmask</code>（事件掩码），是一些常量，<code>dir(select)</code>可以全部看到，下面仅列出和 EPOLL 相关的<br><figure class="highlight ini"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="attr">EPOLLIN</span> = <span class="number">0</span>x1             // Available for read</div><div class="line"><span class="attr">EPOLLPRI</span> = <span class="number">0</span>x2            // Urgent data for read</div><div class="line"><span class="attr">EPOLLOUT</span> = <span class="number">0</span>x4            // Available for write</div><div class="line"><span class="attr">EPOLLERR</span> = <span class="number">0</span>x8            // Error condition happened <span class="literal">on</span> the assoc. fd</div><div class="line"><span class="attr">EPOLLHUP</span> = <span class="number">0</span>x10           // Hang up happened <span class="literal">on</span> the assoc. fd</div><div class="line"><span class="attr">EPOLLRDNORM</span> = <span class="number">0</span>x40        // Equivalent to EPOLLIN</div><div class="line"><span class="attr">EPOLLRDBAND</span> = <span class="number">0</span>x80        // Priority data band can be read.</div><div class="line"><span class="attr">EPOLLWRNORM</span> = <span class="number">0</span>x100       // Equivalent to EPOLLOUT</div><div class="line"><span class="attr">EPOLLWRBAND</span> = <span class="number">0</span>x200       // Priority data may be written.</div><div class="line"><span class="attr">EPOLLMSG</span> = <span class="number">0</span>x400          // Ignored.</div><div class="line"><span class="attr">EPOLLONESHOT</span> = <span class="number">0</span>x40000000 // Set <span class="literal">on</span>e-shot behavior. After <span class="literal">on</span>e event is pulled out, the fd is internally disabled</div><div class="line"><span class="attr">EPOLLET</span> = -<span class="number">0</span>x80000000     // Set Edge Trigger behavior, the default is Level Trigger behavior</div></pre></td></tr></table></figure></p>
+<p>关于什么是 Level-Triggered 和 Edge-Triggerd，建议读一下 Linux 的 man（<code>man epoll</code>），暂时没有 Linux 的可以<a href="http://linux.die.net/man/4/epoll/">猛击这里</a><br>关于这两个 Trigger 在 Python 里面写法有什么区别，可以参考<a href="http://scotdoyle.com/python-epoll-howto.html" target="_blank" rel="external">这篇</a>或者它的<a href="http://zoomq.qiniudn.com/ZQScrapBook/ZqFLOSS/data/20100927213110/" target="_blank" rel="external">译文</a></p>
+<p>因为默认是 Level-Triggered 而且它的写法比较简单，下面就用这个模式做例子</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#!/usr/bin/env python</span></div><div class="line"><span class="comment"># coding=utf-8</span></div><div class="line"></div><div class="line"><span class="keyword">from</span> __future__ <span class="keyword">import</span> print_function</div><div class="line"><span class="keyword">from</span> datetime <span class="keyword">import</span> datetime</div><div class="line"></div><div class="line"><span class="keyword">import</span> socket</div><div class="line"><span class="keyword">import</span> select</div><div class="line"><span class="keyword">import</span> logging</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">timenow</span><span class="params">()</span>:</span></div><div class="line">    <span class="keyword">return</span> datetime.now().strftime(<span class="string">'%H:%M:%S.%f'</span>)</div><div class="line"></div><div class="line">EOT = <span class="string">'\n\n'</span></div><div class="line"></div><div class="line">server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)</div><div class="line">server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, <span class="number">1</span>)</div><div class="line">server_socket.bind((<span class="string">'0.0.0.0'</span>, <span class="number">9000</span>))</div><div class="line">server_socket.listen(<span class="number">5</span>)</div><div class="line">server_socket.setblocking(<span class="keyword">False</span>)</div><div class="line"></div><div class="line">epoll = select.epoll()</div><div class="line">epoll.register(server_socket.fileno(), select.EPOLLIN)</div><div class="line"></div><div class="line"><span class="keyword">try</span>:</div><div class="line">    connections = &#123;&#125;</div><div class="line">    requests = &#123;&#125;</div><div class="line">    responses = &#123;&#125;</div><div class="line"></div><div class="line">    <span class="keyword">while</span> <span class="keyword">True</span>:</div><div class="line">        print(<span class="string">'\n'</span> + timenow() + <span class="string">' Before poll '</span> + <span class="string">'='</span>*<span class="number">20</span>)</div><div class="line">        events = epoll.poll(<span class="number">5</span>)</div><div class="line">        print(timenow() + <span class="string">' After poll'</span>)</div><div class="line"></div><div class="line">        <span class="keyword">for</span> fd, event <span class="keyword">in</span> events:</div><div class="line">            <span class="keyword">if</span> fd == server_socket.fileno():</div><div class="line">                conn, addr = server_socket.accept()</div><div class="line">                conn.setblocking(<span class="keyword">False</span>)</div><div class="line">                conn_fd = conn.fileno()</div><div class="line">                epoll.register(conn_fd, select.EPOLLIN)</div><div class="line">                connections[conn_fd] = conn</div><div class="line">                requests[conn_fd] = <span class="string">b''</span></div><div class="line">                print(timenow() + <span class="string">' Server accepted a request'</span>)</div><div class="line">            <span class="keyword">elif</span> event &amp; select.EPOLLIN:</div><div class="line">                data = connections[fd].recv(<span class="number">1024</span>)</div><div class="line">                requests[fd] += data</div><div class="line">                print(timenow() + <span class="string">' Server received some data: \n'</span> + data)</div><div class="line">                <span class="keyword">if</span> EOT <span class="keyword">in</span> requests[fd]:</div><div class="line">                    epoll.modify(fd, select.EPOLLOUT)</div><div class="line">                    responses[fd] = str(len(requests[fd])) + <span class="string">' bytes received\n'</span></div><div class="line">                    print(timenow() + <span class="string">' All data received: \n'</span> </div><div class="line">                        + requests[fd])</div><div class="line">            <span class="keyword">elif</span> event &amp; select.EPOLLOUT:</div><div class="line">                byte_send = connections[fd].send(responses[fd])</div><div class="line">                print(timenow() + <span class="string">' '</span> + str(byte_send) + <span class="string">' bytes sent to client'</span>)</div><div class="line">                responses[fd] = responses[fd][byte_send:]</div><div class="line">                <span class="keyword">if</span> len(responses[fd]) == <span class="number">0</span>:</div><div class="line">                    epoll.modify(fd, <span class="number">0</span>)</div><div class="line">                    connections[fd].shutdown(socket.SHUT_RDWR)</div><div class="line">            <span class="keyword">elif</span> event &amp; select.EPOLLHUP:</div><div class="line">                epoll.unregister(fd)</div><div class="line">                connections[fd].close()</div><div class="line">                <span class="keyword">del</span> connections[fd]</div><div class="line">                print(timenow() + <span class="string">' connection closed'</span>)</div><div class="line">            print(<span class="string">'fileno = '</span> + str(fd) + <span class="string">', event = '</span> + str(event))</div><div class="line">        print(<span class="string">'End of while '</span> + <span class="string">'='</span>*<span class="number">35</span> + <span class="string">'\n'</span>)</div><div class="line"><span class="keyword">except</span> (OSError, IOError) <span class="keyword">as</span> e:</div><div class="line">    logging.error(e)</div><div class="line"><span class="keyword">finally</span>:</div><div class="line">    epoll.unregister(server_socket.fileno())</div><div class="line">    epoll.close()</div><div class="line">    server_socket.close()</div></pre></td></tr></table></figure>
+<p>客户端可以直接用<code>nc</code>或者<code>telnet</code>去连接</p>
+<p>逐行分析一下这个小栗子（只是个玩具程序，非常不鲁棒……）</p>
+<p>14行：用两个连续的换行来代表客户端传输数据完毕</p>
+<p>16~20行：服务端打开一个 socket，在端口9000监听</p>
+<p>22~23行：创建一个 epoll 对象并把服务端 socket 文件描述符（fd）加入到可读集合中，这样一旦有客户端连接服务器，<code>epoll.poll()</code>就会返回</p>
+<p>26~28行：为每一个连接都分别维护好 socket 对象、请求数据和返回数据</p>
+<p>32行：程序阻塞在这一行，超时时间5s，一旦 fd 集合中有符合条件的事件发生，立刻返回，返回数据格式<code>[(fd, events), (...)]</code></p>
+<p>35行：遍历返回数据，取出每组文件描述符和事件类型</p>
+<p>36~43行：因为首先要先建立连接，并且目前为止 epoll 只注册了一个服务端 fd，监听可读事件，所以第一步肯定是执行这里。比较返回的 fd 和服务端 fd，相等，一定是有客户端开始请求建立连接。</p>
+<p>稍说明一下，Python 的 socket 和 Linux 系统的有点不同：Linux 中创建一个 socket，默认是主动套接字（active socket），即主动向服务器发起连接的客户端 socket，通过 <code>int listen(int sockfd, int backlog)</code>函数，将主动套接字变成监听套接字（listening socket）从而成为被动接受连接的服务端套接字，之后和客户端的对话也完全可以由这个 socket 来完成；Python 中的<code>socket.listen([backlog])</code>也是将主动套接字变成监听套接字，但是这个 socket 只用来建立连接，不负责向客户端接受和发送数据，需要用<code>socket.accept() -&gt; (conn, address)</code>，返回一个新的 socket 来<code>send</code>和<code>recv</code>数据。</p>
+<p>新的 socket conn 依然需要设置成非阻塞模式，因为是否有 fd 可读或可写，poll 会通知我们，当然前提是要先 register 这个 fd，因为是服务端 fd 而且刚刚建立连接，我们只关心是否有可读事件</p>
+<p>44~52行：发现有 fd 可读（并不是服务端 fd），于是<code>recv</code>数据，一次收1024个字节，直到遇见 EOT（End Of Transmission），知道数据已读完，开始将这个 fd 切换到可写集合中，准备发送相应数据</p>
+<p>说一下掩码的用途。eventmask 和返回的 event 按位与（bitwise and），如果非零即发生了 eventmask 所代表的事件（因为 eventmask 换算成二进制都是只有一位为1）。和 subnet mask（子网掩码）一样，IP地址和子网掩码按位与，就得到了子网网段，e.g. 192.168.1.100 &amp; 255.255.255.0 == 192.168.1.0</p>
+<p>53~59行：发现有 fd 可写，于是<code>send</code>数据，不一定能一次发送完，检测相应的 responses 字典中的数据直到长度为0，数据发送完毕。将这个 fd 从可写集合中去掉，连接 shutdown，不再接受和发送数据。</p>
+<p>60~64行：连接 shutdown 之后其实就处于 hang up 状态了，注销 fd，连接 close，做一些收尾工作</p>
+
+
+                <hr>
+
+                
+
+                <ul class="pager">
+                    
+                        <li class="previous">
+                            <a href="/2016/03/05/miscellaneous-tips-about-program-that-may-save-your-day/" data-toggle="tooltip" data-placement="top" title="杂七杂八">&larr; Previous Post</a>
+                        </li>
+                    
+                    
+                        <li class="next">
+                            <a href="/2016/01/06/use-crontab-to-execute-scheduled-commands/" data-toggle="tooltip" data-placement="top" title="用 crontab 执行计划任务">Next Post &rarr;</a>
+                        </li>
+                    
+                </ul>
+
+                
+
+                
+                <!-- disqus 评论框 start -->
+                <div class="comment">
+                    <div id="disqus_thread" class="disqus-thread"></div>
+                </div>
+                <!-- disqus 评论框 end -->
+                
+
+            </div>
+    <!-- Side Catalog Container -->
+        
+
+    <!-- Sidebar Container -->
+
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+
+                <!-- Friends Blog -->
+                
+            </div>
+
+        </div>
+    </div>
+</article>
+
+
+
+
+<!-- disqus 公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = "hexo-theme-huxblog";
+    var disqus_identifier = "http://richang.xyz/2016/01/12/select-and-selectors-module-in-python/";
+    var disqus_url = "http://richang.xyz/2016/01/12/select-and-selectors-module-in-python/";
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("https://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                
+                
+                
+
+                
+
+                
+
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 日常 2017 
+                    <br>
+                    Theme by <a href="http://huangxuan.me">Hux</a> 
+                    <span style="display: inline-block; margin: 0 5px;">
+                        <i class="fa fa-heart"></i>
+                    </span> 
+                    Ported by <a href="http://blog.kaijun.rocks">Kaijun</a> | 
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="91px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=kaijun&repo=hexo-theme-huxblog&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js"></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- 
+     Because of the native support for backtick-style fenced code blocks 
+     right within the Markdown is landed in Github Pages, 
+     From V1.6, There is no need for Highlight.js, 
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0  
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/    
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("http://richang.xyz/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("https://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+
+
+
+<!-- Baidu Tongji -->
+
+
+<!-- Side Catalog -->
+
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="http://richang.xyz/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

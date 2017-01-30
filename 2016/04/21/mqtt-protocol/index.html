@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="日常的博客，记录一些小事">
+    <meta name="keyword"  content="日常">
+    <link rel="shortcut icon" href="/img/favicon.png">
+
+    <title>
+        
+          MQTT 协议 - 日常 | Nichijou
+        
+    </title>
+
+    <link rel="canonical" href="http://richang.xyz/2016/04/21/mqtt-protocol/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Highlight CSS -->
+    <link rel="stylesheet" href="/css/highlight.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="https://cdn.staticfile.org/font-awesome/4.5.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">日常</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+
+                    
+
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/about/">About</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/archives/">Archives</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/tags/">Tags</a>
+                        </li>
+                        
+                    
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Main Content -->
+    
+<!-- Image to hack wechat -->
+<!-- <img src="http://richang.xyz/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="{{ site.baseurl }}/{% if page.header-img %}{{ page.header-img }}{% else %}{{ site.header-img }}{% endif %}" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/home-bg.jpg')
+    }
+</style>
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                          <a class="tag" href="/tags/#协议" title="协议">协议</a>
+                        
+                    </div>
+                    <h1>MQTT 协议</h1>
+                    <h2 class="subheading"></h2>
+                    <span class="meta">
+                        Posted by Will on
+                        2016-04-21
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <p>MQTT 协议是一个基于发布/订阅模式的消息传输协议，它的设计思想是轻巧、开放、简单、规范，易于实现。<br>这些特点使得它对很多场景来说都是很好的选择，特别是对于受限的环境如机器与机器的通信（M2M）以及物联网环境（IoT），而且 MQTT v3.1.1 在2014年就已经成了 OASIS(结构化信息标准促进组织) 标准。</p>
+<p>官方网站：<a href="http://mqtt.org/" target="_blank" rel="external">mqtt.org</a></p>
+<p>附上 <a href="http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html" target="_blank" rel="external">官方文档</a> 和 <a href="https://github.com/mcxiaoke/mqtt" target="_blank" rel="external">国人翻译</a></p>
+<p>MQTT 协议运行在 TCP/IP 或者其它提供了有序、可靠、双向连接的网络连接上，它有以下特点:</p>
+<ul>
+<li>使用发布/订阅消息模式,提供了一对多的消息分发和应用之间的解耦</li>
+<li>消息传输不需要知道负载内容</li>
+<li>提供三种等级的服务质量：<ol>
+<li>“最多一次”，尽操作环境所能提供的最大努力分发消息。消息可能会丢失。例如，这个 等级可用于环境传感器数据，单次的数据丢失没关系，因为不久之后会再次发送。</li>
+<li>“至少一次”，保证消息可以到达，但是可能会重复。</li>
+<li>“仅一次”，保证消息只到达一次。例如，这个等级可用在一个计费系统中，这里如果消息重复或丢失会导致不正确的收费。</li>
+</ol>
+</li>
+<li>很小的传输消耗和协议数据交换，最大限度减少网络流量</li>
+<li>异常连接断开发生时，能通知到相关各方</li>
+</ul>
+<h2 id="0x00-相关术语"><a href="#0x00-相关术语" class="headerlink" title="0x00 相关术语"></a><b style="color:#5abebc">0x00 相关术语</b></h2><h3 id="客户端-Client"><a href="#客户端-Client" class="headerlink" title="客户端 / Client:"></a>客户端 / Client:</h3><p>使用 MQTT 的程序或设备。客户端总是通过网络连接到服务端。它可以</p>
+<ul>
+<li>发布应用消息给其它相关的客户端</li>
+<li>订阅以请求接受相关的应用消息</li>
+<li>取消订阅以移除接受应用消息的请求</li>
+<li>从服务端断开连接</li>
+</ul>
+<h3 id="服务端-Server"><a href="#服务端-Server" class="headerlink" title="服务端 / Server:"></a>服务端 / Server:</h3><p>一个程序或设备,作为发送消息的客户端和请求订阅的客户端之间的中介。服务端</p>
+<ul>
+<li>接受来自客户端的网络连接</li>
+<li>接受客户端发布的应用消息</li>
+<li>处理客户端的订阅和取消订阅请求</li>
+<li>转发应用消息给符合条件的客户端订阅</li>
+</ul>
+<h3 id="订阅-Subscription"><a href="#订阅-Subscription" class="headerlink" title="订阅 / Subscription:"></a>订阅 / Subscription:</h3><p>订阅包含一个主题过滤器(Topic Filter)和一个最大的服务质量(QoS)等级。订阅与单个会话 (Session)关联。会话可以包含多于一个的订阅。会话的每个订阅都有一个不同的主题过滤器。</p>
+<h3 id="主题名-Topic-Name"><a href="#主题名-Topic-Name" class="headerlink" title="主题名 / Topic Name:"></a>主题名 / Topic Name:</h3><p>附加在应用消息上的一个标签，服务端已知且与订阅匹配。服务端发送应用消息的一个副本给每一个匹配的客户端订阅。</p>
+<h3 id="主题过滤器-Topic-Filter"><a href="#主题过滤器-Topic-Filter" class="headerlink" title="主题过滤器 / Topic Filter:"></a>主题过滤器 / Topic Filter:</h3><p>订阅中包含的一个表达式，用于表示相关的一个或多个主题。主题过滤器可以使用通配符。</p>
+<h3 id="会话-Session"><a href="#会话-Session" class="headerlink" title="会话 / Session:"></a>会话 / Session:</h3><p>客户端和服务端之间的状态交互。一些会话持续时长与网络连接一样，另一些可以在客户端和服务端的多个连续网络连接间扩展。</p>
+<h3 id="控制报文-MQTT-Control-Packet"><a href="#控制报文-MQTT-Control-Packet" class="headerlink" title="控制报文 / MQTT Control Packet:"></a>控制报文 / MQTT Control Packet:</h3><p>通过网络连接发送的信息数据包。MQTT 规范定义了14种不同类型的控制报文，其中一个(PUBLISH 报文)用于传输应用消息。</p>
+<h2 id="0x01-控制报文格式"><a href="#0x01-控制报文格式" class="headerlink" title="0x01 控制报文格式"></a><b style="color:#5abebc">0x01 控制报文格式</b></h2><p>控制报文由3部分组成：</p>
+<ol>
+<li>Fixed header 固定报头，所有控制报文都包含</li>
+<li>Variable header 可变报头，部分控制报文包含</li>
+<li>Payload 有效载荷，部分控制报文包含</li>
+</ol>
+<h3 id="1-固定报头"><a href="#1-固定报头" class="headerlink" title="1. 固定报头"></a><strong>1. 固定报头</strong></h3><p>固定报头包含两部分</p>
+<p>固定报头的第一部分：<br>报文的第1个字节<br><figure class="highlight gherkin"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">+-----+----+----+----+----+----+----+----+----+</div><div class="line">|<span class="string"> Bit </span>|<span class="string">  7 </span>|<span class="string">  6 </span>|<span class="string">  5 </span>|<span class="string">  4 </span>|<span class="string">  3 </span>|<span class="string">  2 </span>|<span class="string">  1 </span>|<span class="string">  0 </span>|</div><div class="line">+-----|<span class="string">----+----+----+----+----+----+----+----</span>|</div><div class="line">|<span class="string">     </span>|<span class="string">                   </span>|<span class="string">                   </span>|</div><div class="line">|<span class="string">Byte1</span>|<span class="string">     控制报文类型    </span>|<span class="string">       标志位       </span>|</div><div class="line">|<span class="string">     </span>|<span class="string">                   </span>|<span class="string">                   </span>|</div><div class="line">+-----|<span class="string">-------------------+-------------------</span>|</div></pre></td></tr></table></figure></p>
+<p>前4位可表示16个数值，各含义不再赘述，见 <a href="https://mcxiaoke.gitbooks.io/mqtt-cn/content/mqtt/02-ControlPacketFormat.html#_Table_2.1_-" target="_blank" rel="external">MQTT控制报文的类型</a></p>
+<p>根据前4位报文类型，后4位表示的含义也各不相同，现在只有 PUBLISH 控制报文在 v3.1.1 版本中使用了前3位，最后1位保留：<br><figure class="highlight gherkin"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">+-----+----+----+----+----+----+----+----+----+</div><div class="line">|<span class="string"> Bit </span>|<span class="string">  7 </span>|<span class="string">  6 </span>|<span class="string">  5 </span>|<span class="string">  4 </span>|<span class="string">  3 </span>|<span class="string">  2 </span>|<span class="string">  1 </span>|<span class="string">  0 </span>|</div><div class="line">+-----+----+----+----+----+----+---------+----+</div><div class="line">|<span class="string">     </span>|<span class="string">    </span>|<span class="string">    </span>|<span class="string">    </span>|<span class="string">    </span>|<span class="string">    </span>|<span class="string">         </span>|<span class="string">    </span>|</div><div class="line">|<span class="string">     </span>|<span class="string"> 0  </span>|<span class="string"> 0  </span>|<span class="string"> 1  </span>|<span class="string"> 1  </span>|<span class="string">DUP </span>|<span class="string">   QoS   </span>|<span class="string"> X  </span>|</div><div class="line">|<span class="string">Byte1</span>|<span class="string">----+----+----+----+----+---------+----+</span></div><div class="line">|<span class="string">     </span>|<span class="string">                   </span>|<span class="string">                   </span>|</div><div class="line">|<span class="string">     </span>|<span class="string">    PUBLISH        </span>|<span class="string">                   </span>|</div><div class="line">+-----+-------------------+-------------------+</div></pre></td></tr></table></figure></p>
+<p>DUP 位：如果 DUP 标志被设置为 0，表示这是客户端或服务端第一次请求发送这个 PUBLISH 报文。如果 DUP 标志 被设置为 1，表示这可能是一个早前报文请求的重发。<br>QoS 位：</p>
+<ul>
+<li>00 最多分发一次</li>
+<li>01 至少分发一次</li>
+<li>10 只分发一次</li>
+<li>11 保留<br>PUBLISH 报文不能将 QoS 所有的位设置为 1。如果服务端或客户端收到 QoS 所有位都为 1 的 PUBLISH 报文，它必须关闭网络连接</li>
+</ul>
+<p>固定报头的第二部分：<br>从第2个字节开始为剩余长度字段，剩余长度字段使用一个变长度编码方案，对小于128的值使用单字节编码，最多4个字节。</p>
+<p>（因为这个为变长字段所以固定报头的长度并不固定，只是说每个报文都一定有这一部分罢了。）</p>
+<p>剩余长度（Remaining Length）表示当前报文剩余部分的字节数，包括可变报头和负载的数据，剩余长度不包括用于编码剩余长度字段本身的字节数。</p>
+<p>低7位有效位用于编码数据，最高有效位用于指示是否有更多的字节。因此每个字节可以编码128个数值和一个延续位（continuation bit）。</p>
+<p>1个字节时，从 0(0x00) 到 127(0x7F)<br>2个字节时，从 128(0x80,0x01) 到 16383(0xFF,0x7F)<br>3个字节时，从 16384(0x80,0x80,0x01) 到 2097151(0xFF,0xFF,0x7F)<br>4个字节时，从 2097152(0x80,0x80,0x80,0x01) 到 268435455(0xFF,0xFF,0xFF,0x7F)</p>
+<h3 id="2-可变报头"><a href="#2-可变报头" class="headerlink" title="2. 可变报头"></a><strong>2. 可变报头</strong></h3><p>某些 MQTT 控制报文包含一个可变报头部分。它在固定报头和有效负载之间。可变报头的内容根据报文类型的不同而不同。</p>
+<p>可变报头的报文标识符(Packet Identifier)字段存在于在多个类型的报文里，长度2字节，这些报文是 PUBLISH (QoS&gt;0 时), PUBACK, PUBREC, PUBREL, PUBCOMP, SUBSCRIBE, SUBACK, UNSUBSCIBE, UNSUBACK。</p>
+<p>SUBSCRIBE，UNSUBSCRIBE 和 PUBLISH（QoS大于0）控制报文必须包含一个非零的16位报文标识符（Packet Identifier）[MQTT-2.3.1-1]。客户端每次发送一个新的这些类型的报文时都必须分配一个当前未使用的报文标识符 [MQTT-2.3.1-2]。如果一个客户端要重发这个特殊的控制报文，在随后重发那个报文时，它必须使用相同的标识符。当客户端处理完这个报文对应的确认后，这个报文标识符就释放可重用。QoS 1 的 PUBLISH 对应的是PUBACK，QoS 2 的 PUBLISH 对应的是 PUBCOMP，与 SUBSCRIBE 或 UNSUBSCRIBE 对应的分别是 SUBACK 或 UNSUBACK [MQTT-2.3.1-3]。发送一个 QoS 0 的 PUBLISH 报文时，相同的条件也适用于服务端 [MQTT-2.3.1-4]。</p>
+<p>QoS 等于 0 的 PUBLISH 报文不能包含报文标识符 [MQTT-2.3.1-5]。</p>
+<p>PUBACK, PUBREC, PUBREL 报文必须包含与最初发送的 PUBLISH 报文相同的报文标识符 [MQTT-2.3.1-6]。类似地，SUBACK 和 UNSUBACK 必须包含在对应的 SUBSCRIBE 和 UNSUBSCRIBE 报文中使用的报文标识符 [MQTT-2.3.1-7]。</p>
+<p>下表总结了控制报文是否需要 Package Identifier 的情况<br><figure class="highlight asciidoc"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div></pre></td><td class="code"><pre><div class="line"><span class="code">+----------------------------------------+</span></div><div class="line"><span class="section">|Control Packet |Package Identifier Field|</span></div><div class="line">+----------------------------------------+</div><div class="line">|               |                        |</div><div class="line"><span class="section">|    CONNECT    |          NO            |</span></div><div class="line">+----------------------------------------+</div><div class="line">|               |                        |</div><div class="line"><span class="section">|    CONNACK    |          NO            |</span></div><div class="line">+----------------------------------------+</div><div class="line">|               |                        |</div><div class="line"><span class="section">|    PUBLISH    |    YES  (If QoS &gt; 0)   |</span></div><div class="line">+----------------------------------------+</div><div class="line">|               |                        |</div><div class="line"><span class="section">|    PUBACK     |         YES            |</span></div><div class="line">+----------------------------------------+</div><div class="line">|               |                        |</div><div class="line"><span class="section">|    PUBREC     |         YES            |</span></div><div class="line">+----------------------------------------+</div><div class="line">|               |                        |</div><div class="line"><span class="section">|    PUBREL     |         YES            |</span></div><div class="line">+----------------------------------------+</div><div class="line">|               |                        |</div><div class="line"><span class="section">|    PUBCOMP    |         YES            |</span></div><div class="line">+----------------------------------------+</div><div class="line">|               |                        |</div><div class="line"><span class="section">|   SUBSCRIBE   |         YES            |</span></div><div class="line">+----------------------------------------+</div><div class="line">|               |                        |</div><div class="line"><span class="section">|    SUBACK     |         YES            |</span></div><div class="line">+----------------------------------------+</div><div class="line">|               |                        |</div><div class="line"><span class="section">|  UNSUBSCRIBE  |         YES            |</span></div><div class="line">+----------------------------------------+</div><div class="line">|               |                        |</div><div class="line"><span class="section">|    UNSUBACK   |         YES            |</span></div><div class="line">+----------------------------------------+</div><div class="line">|               |                        |</div><div class="line"><span class="section">|    PINGREQ    |         NO             |</span></div><div class="line">+----------------------------------------+</div><div class="line">|               |                        |</div><div class="line"><span class="section">|    PINGESP    |         NO             |</span></div><div class="line">+----------------------------------------+</div><div class="line">|               |                        |</div><div class="line"><span class="section">|   DISCONNECT  |         NO             |</span></div><div class="line">+----------------------------------------+</div></pre></td></tr></table></figure></p>
+<p>除了报文标示符，不同类型的报文也包含其它不同的字段。<br>比如 CONNECT 报文的可变报头按下列次序包含四个字段：<br>协议名(Protocol Name)，协议级别(Protocol Level)，连接标志(Connect Flags)和保持连接(Keep Alive)。其它报文的可变报头在下面依次介绍。</p>
+<h3 id="3-有效载荷"><a href="#3-有效载荷" class="headerlink" title="3. 有效载荷"></a><strong>3. 有效载荷</strong></h3><p>有效载荷是报文的最后一部分<br>各类型控制报文是否需要有效载荷的情况如下表<br><figure class="highlight asciidoc"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div></pre></td><td class="code"><pre><div class="line"><span class="code">+-------------------------+</span></div><div class="line"><span class="section">|Control Packet | Payload |</span></div><div class="line">+-------------------------+</div><div class="line">|               |         |</div><div class="line"><span class="section">|    CONNECT    | Required|</span></div><div class="line">+-------------------------+</div><div class="line">|               |         |</div><div class="line"><span class="section">|    CONNACK    |   None  |</span></div><div class="line">+-------------------------+</div><div class="line">|               |         |</div><div class="line"><span class="section">|    PUBLISH    | Optional|</span></div><div class="line">+-------------------------+</div><div class="line">|               |         |</div><div class="line"><span class="section">|    PUBACK     |   None  |</span></div><div class="line">+-------------------------+</div><div class="line">|               |         |</div><div class="line"><span class="section">|    PUBREC     |   None  |</span></div><div class="line">+-------------------------+</div><div class="line">|               |         |</div><div class="line"><span class="section">|    PUBREL     |   None  |</span></div><div class="line">+-------------------------+</div><div class="line">|               |         |</div><div class="line"><span class="section">|    PUBCOMP    |   None  |</span></div><div class="line">+-------------------------+</div><div class="line">|               |         |</div><div class="line"><span class="section">|   SUBSCRIBE   | Required|</span></div><div class="line">+-------------------------+</div><div class="line">|               |         |</div><div class="line"><span class="section">|    SUBACK     | Required|</span></div><div class="line">+-------------------------+</div><div class="line">|               |         |</div><div class="line"><span class="section">|  UNSUBSCRIBE  | Required|</span></div><div class="line">+-------------------------+</div><div class="line">|               |         |</div><div class="line"><span class="section">|    UNSUBACK   |   None  |</span></div><div class="line">+-------------------------+</div><div class="line">|               |         |</div><div class="line"><span class="section">|    PINGREQ    |   None  |</span></div><div class="line">+-------------------------+</div><div class="line">|               |         |</div><div class="line"><span class="section">|    PINGESP    |   None  |</span></div><div class="line">+-------------------------+</div><div class="line">|               |         |</div><div class="line"><span class="section">|   DISCONNECT  |   None  |</span></div><div class="line">+-------------------------+</div></pre></td></tr></table></figure></p>
+<h2 id="0x02-控制报文"><a href="#0x02-控制报文" class="headerlink" title="0x02 控制报文"></a><b style="color:#5abebc">0x02 控制报文</b></h2><h3 id="1-Connect-连接服务器"><a href="#1-Connect-连接服务器" class="headerlink" title="1. Connect - 连接服务器"></a><strong>1. Connect - 连接服务器</strong></h3>
+
+                <hr>
+
+                
+
+                <ul class="pager">
+                    
+                        <li class="previous">
+                            <a href="/2017/01/09/no-title/" data-toggle="tooltip" data-placement="top" title="无题">&larr; Previous Post</a>
+                        </li>
+                    
+                    
+                        <li class="next">
+                            <a href="/2016/03/06/mysql-server-sql-mode/" data-toggle="tooltip" data-placement="top" title="MySQL 的 SQL 模式">Next Post &rarr;</a>
+                        </li>
+                    
+                </ul>
+
+                
+
+                
+                <!-- disqus 评论框 start -->
+                <div class="comment">
+                    <div id="disqus_thread" class="disqus-thread"></div>
+                </div>
+                <!-- disqus 评论框 end -->
+                
+
+            </div>
+    <!-- Side Catalog Container -->
+        
+
+    <!-- Sidebar Container -->
+
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+
+                <!-- Friends Blog -->
+                
+            </div>
+
+        </div>
+    </div>
+</article>
+
+
+
+
+<!-- disqus 公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = "hexo-theme-huxblog";
+    var disqus_identifier = "http://richang.xyz/2016/04/21/mqtt-protocol/";
+    var disqus_url = "http://richang.xyz/2016/04/21/mqtt-protocol/";
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("https://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                
+                
+                
+
+                
+
+                
+
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 日常 2017 
+                    <br>
+                    Theme by <a href="http://huangxuan.me">Hux</a> 
+                    <span style="display: inline-block; margin: 0 5px;">
+                        <i class="fa fa-heart"></i>
+                    </span> 
+                    Ported by <a href="http://blog.kaijun.rocks">Kaijun</a> | 
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="91px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=kaijun&repo=hexo-theme-huxblog&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js"></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- 
+     Because of the native support for backtick-style fenced code blocks 
+     right within the Markdown is landed in Github Pages, 
+     From V1.6, There is no need for Highlight.js, 
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0  
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/    
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("http://richang.xyz/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("https://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+
+
+
+<!-- Baidu Tongji -->
+
+
+<!-- Side Catalog -->
+
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="http://richang.xyz/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>
